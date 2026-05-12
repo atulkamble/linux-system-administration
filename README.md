@@ -1,7 +1,5 @@
 # 📖 Linux System Administration Essentials
 
-Comprehensive notes for learning and practicing Linux System Administration concepts with commands and examples.
-
 ---
 
 # 📑 Table of Contents
