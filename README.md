@@ -444,10 +444,10 @@ systemctl get-default
 
 # 📌 Important Points to Remember
 
-✅ `systemd` controls services
-✅ Services can auto-start during boot
-✅ Use `journalctl` for troubleshooting
-✅ Failed services can impact applications
+- ✅ `systemd` controls services
+- ✅ Services can auto-start during boot
+- ✅ Use `journalctl` for troubleshooting
+- ✅ Failed services can impact applications
 
 ---
 
@@ -543,9 +543,9 @@ rpm -qa
 
 # 📌 Important Points to Remember
 
-✅ Update repositories before installation
-✅ Use trusted repositories only
-✅ Package managers resolve dependencies automatically
+- ✅ Update repositories before installation
+- ✅ Use trusted repositories only
+- ✅ Package managers resolve dependencies automatically
 
 ---
 
@@ -616,10 +616,10 @@ rsync -av source/ destination/
 
 # 📌 Important Points to Remember
 
-✅ Verify backups regularly
-✅ Keep backup copies remotely
-✅ Automate backups with cron jobs
-✅ Test restore process regularly
+- ✅ Verify backups regularly
+- ✅ Keep backup copies remotely
+- ✅ Automate backups with cron jobs
+- ✅ Test restore process regularly
 
 ---
 
@@ -704,10 +704,10 @@ journalctl -b
 
 # 📌 Important Points to Remember
 
-✅ Logs consume disk space
-✅ Use `tail -f` for real-time monitoring
-✅ Monitor auth logs for security
-✅ Configure log rotation properly
+- ✅ Logs consume disk space
+- ✅ Use `tail -f` for real-time monitoring
+- ✅ Monitor auth logs for security
+- ✅ Configure log rotation properly
 
 ---
 
@@ -812,25 +812,25 @@ sudo systemctl status crond
 
 # 📌 Important Points to Remember
 
-✅ Use full file paths in cron jobs
-✅ Test scripts manually before scheduling
-✅ Redirect output to log files
-✅ Ensure cron service is running
+- ✅ Use full file paths in cron jobs
+- ✅ Test scripts manually before scheduling
+- ✅ Redirect output to log files
+- ✅ Ensure cron service is running
 
 ---
 
 # 🚀 Final Important Linux System Administration Tips
 
-✅ Monitor processes regularly
-✅ Keep systems updated
-✅ Secure services and logs
-✅ Automate repetitive tasks
-✅ Maintain proper backups
-✅ Analyze logs regularly
-✅ Learn troubleshooting commands daily
-✅ Practice service management commands
-✅ Monitor CPU, memory, and disk usage
-✅ Understand Linux boot and service flow
+- ✅ Monitor processes regularly
+- ✅ Keep systems updated
+- ✅ Secure services and logs
+- ✅ Automate repetitive tasks
+- ✅ Maintain proper backups
+- ✅ Analyze logs regularly
+- ✅ Learn troubleshooting commands daily
+- ✅ Practice service management commands
+- ✅ Monitor CPU, memory, and disk usage
+- ✅ Understand Linux boot and service flow
 
 ---
 
