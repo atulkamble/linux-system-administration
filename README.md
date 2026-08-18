@@ -319,12 +319,12 @@ systemd─┬─sshd───bash
 
 # 📌 Important Points to Remember
 
-✅ Every process has a unique PID
-✅ PID 1 is usually `systemd`
-✅ Use `top` or `htop` for monitoring
-✅ Use `kill -9` only if required
-✅ Monitor CPU and memory regularly
-✅ Use `systemctl` for service management
+- ✅ Every process has a unique PID
+- ✅ PID 1 is usually `systemd`
+- ✅ Use `top` or `htop` for monitoring
+- ✅ Use `kill -9` only if required
+- ✅ Monitor CPU and memory regularly
+- ✅ Use `systemctl` for service management
 
 ---
 
