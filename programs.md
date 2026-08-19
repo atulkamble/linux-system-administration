@@ -483,6 +483,614 @@ Sockets
 
 For **Linux administration/DevOps learning**, you don't need to become a full C developer. Focus especially on `getpid()`, `getppid()`, `fork()`, `wait()`, `open()`, `close()`, `read()`, `write()`, `pipe()` and signals. These will make Linux process management and IPC much easier to understand.
 
+# Linux Process Programming in C
+
+**Process programming** means using C/Linux system calls to **create, execute, control, synchronize, and terminate processes**.
+
+For Linux learning, follow this order:
+
+**PID/PPID → `fork()` → Parent & Child → `wait()` → `exec()` → `exit()` → Zombie → Orphan → Signals → Pipes**
+
+|  # | Topic                   | Basic definition                           | Main function        |
+| -: | ----------------------- | ------------------------------------------ | -------------------- |
+|  1 | PID                     | Unique ID of a process                     | `getpid()`           |
+|  2 | PPID                    | ID of the parent process                   | `getppid()`          |
+|  3 | Process creation        | Create a child process                     | `fork()`             |
+|  4 | Process synchronization | Parent waits for child                     | `wait()`             |
+|  5 | Program execution       | Replace process with another program       | `exec()`             |
+|  6 | Process termination     | End a process                              | `exit()`             |
+|  7 | Zombie process          | Finished child not yet collected by parent | `wait()`             |
+|  8 | Orphan process          | Child whose parent has terminated          | `getppid()`          |
+|  9 | Signals                 | Send events to processes                   | `kill()`, `signal()` |
+| 10 | IPC                     | Communication between processes            | `pipe()`             |
+
+## 1. PID and PPID
+
+**PID (Process ID)** uniquely identifies a running process.
+
+**PPID (Parent Process ID)** identifies the process that created it.
+
+```c id="1np26q"
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+
+    printf("PID  = %d\n", getpid());
+    printf("PPID = %d\n", getppid());
+
+    return 0;
+}
+```
+
+Compile:
+
+```bash id="3nhwjg"
+gcc process.c -o process
+./process
+```
+
+Example:
+
+```text id="9u49v4"
+PID  = 3250
+PPID = 2100
+```
+
+Check from Linux:
+
+```bash id="63ikjx"
+ps -ef
+```
+
+or:
+
+```bash id="a1g76i"
+ps -o pid,ppid,cmd
+```
+
+---
+
+# 2. `fork()` — Most Important
+
+**Definition:** `fork()` creates a new process by duplicating the calling process.
+
+```c id="5gg3hw"
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+
+    fork();
+
+    printf("Hello\n");
+
+    return 0;
+}
+```
+
+Compile:
+
+```bash id="wjq73q"
+gcc fork.c -o fork
+./fork
+```
+
+Output:
+
+```text id="sjqsm6"
+Hello
+Hello
+```
+
+Why twice?
+
+Before:
+
+```text id="gy0pt5"
+Process
+```
+
+After `fork()`:
+
+```text id="gzsw0b"
+       fork()
+         |
+    +----+----+
+    |         |
+ Parent     Child
+    |         |
+ printf     printf
+```
+
+Both processes continue executing the code after `fork()`.
+
+---
+
+# 3. Identify Parent and Child
+
+`fork()` returns different values:
+
+| Return value | Meaning                                     |
+| -----------: | ------------------------------------------- |
+|        `< 0` | `fork()` failed                             |
+|          `0` | Running inside child                        |
+|        `> 0` | Running inside parent; value is child's PID |
+
+Example:
+
+```c id="fwmvgw"
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        printf("I am Child\n");
+        printf("Child PID: %d\n", getpid());
+
+    } else {
+
+        printf("I am Parent\n");
+        printf("Parent PID: %d\n", getpid());
+        printf("Child PID: %d\n", pid);
+
+    }
+
+    return 0;
+}
+```
+
+Possible output:
+
+```text id="4mrf73"
+I am Parent
+Parent PID: 4000
+Child PID: 4001
+
+I am Child
+Child PID: 4001
+```
+
+---
+
+# 4. `wait()` — Parent Waits for Child
+
+**Definition:** `wait()` makes the parent process wait until one of its child processes terminates.
+
+Without `wait()`, parent and child execute independently.
+
+```c id="g5qv6v"
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        printf("Child started\n");
+        sleep(3);
+        printf("Child completed\n");
+
+    } else {
+
+        wait(NULL);
+
+        printf("Parent completed\n");
+    }
+
+    return 0;
+}
+```
+
+Output:
+
+```text id="zqu1t6"
+Child started
+
+Child completed
+Parent completed
+```
+
+Concept:
+
+```text id="y2wukb"
+Parent
+  |
+fork()
+  |
+  +---------- Child
+  |             |
+wait()        work
+  |             |
+  |          exit
+  |<------------+
+  |
+continue
+```
+
+---
+
+# 5. `exec()` — Execute Another Program
+
+**Definition:** The `exec` family replaces the current process image with a new program.
+
+Example:
+
+```c id="imth98"
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+
+    printf("Before exec\n");
+
+    execl("/bin/ls", "ls", "-l", NULL);
+
+    printf("After exec\n");
+
+    return 0;
+}
+```
+
+Compile:
+
+```bash id="b06ejv"
+gcc exec.c -o exec
+./exec
+```
+
+You'll see the output of:
+
+```bash id="tnu9wf"
+ls -l
+```
+
+Normally:
+
+```text id="o9m8pw"
+Before exec
+ls output...
+```
+
+You won't see:
+
+```text id="83bj8s"
+After exec
+```
+
+because successful `exec()` **replaces the current program**.
+
+---
+
+# 6. `fork()` + `exec()`
+
+This is one of the most important Unix/Linux process patterns.
+
+```c id="ck8gxu"
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        printf("Child executing ls\n");
+
+        execl("/bin/ls", "ls", "-l", NULL);
+
+    } else {
+
+        wait(NULL);
+
+        printf("Parent completed\n");
+    }
+
+    return 0;
+}
+```
+
+Concept:
+
+```text id="tjjm9u"
+Shell
+ |
+fork()
+ |
+ +----------------+
+ |                |
+Parent           Child
+ |                |
+wait()          exec()
+ |                |
+ |               ls
+ |                |
+ +<---------------+
+ |
+continue
+```
+
+This concept is fundamental to understanding how **shells launch commands**.
+
+---
+
+# 7. `exit()`
+
+**Definition:** `exit()` terminates the current process and provides an exit status.
+
+```c id="3r5n7f"
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+
+    printf("Program started\n");
+
+    exit(0);
+
+    printf("This will not execute\n");
+}
+```
+
+Compile and check the status:
+
+```bash id="3mof6g"
+gcc exit.c -o exit
+./exit
+
+echo $?
+```
+
+`0` normally means **success**.
+
+---
+
+# 8. Zombie Process
+
+**Definition:** A zombie is a child process that has terminated but whose parent has **not yet collected its termination status** using `wait()`/`waitpid()`.
+
+Basic demonstration:
+
+```c id="jvq8dj"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() {
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        printf("Child exiting\n");
+        exit(0);
+
+    } else {
+
+        printf("Parent sleeping\n");
+        sleep(30);
+
+    }
+
+    return 0;
+}
+```
+
+While the parent sleeps, use another terminal:
+
+```bash id="b4b2j6"
+ps -el
+```
+
+You may see:
+
+```text id="f1qt7f"
+Z
+```
+
+or:
+
+```text id="oxm1w7"
+<defunct>
+```
+
+Concept:
+
+```text id="rt0o0c"
+Child terminates
+      ↓
+Exit status remains
+      ↓
+Parent hasn't called wait()
+      ↓
+    ZOMBIE
+```
+
+---
+
+# 9. Orphan Process
+
+**Definition:** An orphan is a child process whose parent terminates while the child is still running. Linux reparents it to an appropriate subreaper, commonly `systemd`/PID 1 in a simple environment.
+
+```c id="jrzdkm"
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        sleep(5);
+
+        printf("Child PID  : %d\n", getpid());
+        printf("New PPID   : %d\n", getppid());
+
+    } else {
+
+        printf("Parent exiting\n");
+    }
+
+    return 0;
+}
+```
+
+Concept:
+
+```text id="6s94uq"
+Parent
+  |
+fork()
+  |
+Child
+  |
+Parent terminates
+  |
+Child continues
+  ↓
+Orphan / reparented
+```
+
+---
+
+# 10. Signals
+
+**Definition:** Signals allow the OS or another process to notify/control a running process.
+
+```c id="2ruc6n"
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+
+void handler(int sig) {
+    printf("Signal received\n");
+}
+
+int main() {
+
+    signal(SIGINT, handler);
+
+    printf("PID: %d\n", getpid());
+
+    while (1) {
+        sleep(1);
+    }
+
+    return 0;
+}
+```
+
+Run:
+
+```bash id="55e5ax"
+gcc signal.c -o signal
+./signal
+```
+
+Press:
+
+```text id="gj8lvp"
+Ctrl+C
+```
+
+The program catches `SIGINT`.
+
+---
+
+# 11. Pipe Between Processes
+
+After understanding `fork()`, start IPC.
+
+```c id="mb31l6"
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+int main() {
+
+    int fd[2];
+    char buffer[100];
+
+    pipe(fd);
+
+    pid_t pid = fork();
+
+    if (pid == 0) {
+
+        close(fd[1]);
+
+        read(fd[0], buffer, sizeof(buffer));
+
+        printf("Child received: %s\n", buffer);
+
+        close(fd[0]);
+
+    } else {
+
+        close(fd[0]);
+
+        char message[] = "Hello Child";
+
+        write(fd[1], message, strlen(message) + 1);
+
+        close(fd[1]);
+    }
+
+    return 0;
+}
+```
+
+Concept:
+
+```text id="p0dbri"
+Parent Process
+      |
+    write()
+      |
+      ↓
+   [ PIPE ]
+      |
+    read()
+      |
+      ↓
+Child Process
+```
+
+## Commands Worth Practicing Alongside C
+
+```bash id="xby6o1"
+ps
+ps -ef
+ps aux
+pstree
+pgrep nginx
+pidof nginx
+top
+htop
+
+jobs
+bg
+fg
+
+kill PID
+kill -15 PID
+kill -9 PID
+kill -l
+```
+
+For your Linux learning, spend the most time on **`fork()` → PID/PPID → `wait()` → `exec()` → exit status → zombie/orphan → signals → pipes**. Once these are clear, IPC programming becomes much easier.
+
+
 # Linux IPC — C Programs for Practice
 
 For C programming, I recommend learning IPC in this order:
